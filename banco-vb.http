@@ -1,0 +1,6 @@
+@banco_vb_HostAddress = http://localhost:5002
+
+GET {{banco_vb_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
