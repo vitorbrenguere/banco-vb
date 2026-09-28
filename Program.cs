@@ -1,6 +1,11 @@
 using banco_vb.Models;
+using banco_vb.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Registra o serviço no container de Injeção de Dependências
+builder.Services.AddSingleton<ContaService>();
+
 var app = builder.Build();
 
 app.MapGet("/api/status", () => 
@@ -13,38 +18,43 @@ app.MapGet("/api/status", () =>
     };
 });
 
-// Novo endpoint: Retorna os dados de uma conta bancária
-app.MapGet("/api/conta", () =>
+// READ (Obter todas)
+app.MapGet("/api/conta", (ContaService service) =>
 {
-var contas = new List<Conta>
-    {
-        new Conta { Id = 1, Titular = "Vitor Brenguere", Saldo = 1500.50m },
-        new Conta { Id = 2, Titular = "Neymar Jr", Saldo = 7200.00m },
-        new Conta { Id = 3, Titular = "Allen Iverson", Saldo = 5450.75m }
-    };
-
-    return contas;
+    return service.ObterTodas();
 });
 
-// Endpoint para buscar uma conta específica pelo ID
-app.MapGet("/api/conta/{id}", (int id) =>
+// READ (Obter por ID)
+app.MapGet("/api/conta/{id}", (int id, ContaService service) =>
 {
-    var contas = new List<Conta>
-    {
-        new Conta { Id = 1, Titular = "Vitor Brenguere", Saldo = 1500.50m },
-        new Conta { Id = 2, Titular = "Neymar Jr", Saldo = 7200.00m },
-        new Conta { Id = 3, Titular = "Allen Iverson", Saldo = 5450.75m }
-    };
+    var conta = service.ObterPorId(id);
 
-    // Procura a conta que tem o mesmo ID recebido na URL
-    var contaEncontrada = contas.FirstOrDefault(c => c.Id == id);
-
-    if (contaEncontrada == null)
+    if (conta == null)
     {
         return Results.NotFound(new { mensagem = "Conta não encontrada!" });
     }
 
-    return Results.Ok(contaEncontrada);
+    return Results.Ok(conta);
+});
+
+// CREATE (Criar nova conta)
+app.MapPost("/api/conta", (Conta novaConta, ContaService service) =>
+{
+    var contaCriada = service.Adicionar(novaConta);
+    return Results.Created($"/api/conta/{contaCriada.Id}", contaCriada);
+});
+
+// DELETE (Remover conta por ID)
+app.MapDelete("/api/conta/{id}", (int id, ContaService service) =>
+{
+    var removido = service.Remover(id);
+
+    if (!removido)
+    {
+        return Results.NotFound(new { mensagem = "Conta não encontrada para remoção!" });
+    }
+
+    return Results.NoContent(); // Código 204: Sucesso sem conteúdo de retorno
 });
 
 app.Run();
