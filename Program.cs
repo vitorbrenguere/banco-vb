@@ -1,13 +1,16 @@
-using banco_vb.Models;
 using banco_vb.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Registra o serviço no container de Injeção de Dependências
+// 1. Registra os Controllers da aplicação
+builder.Services.AddControllers();
+
+// 2. Registra o nosso serviço de contas
 builder.Services.AddSingleton<ContaService>();
 
 var app = builder.Build();
 
+// Rotas informativas gerais (opcional)
 app.MapGet("/api/status", () => 
 {
     return new 
@@ -18,43 +21,7 @@ app.MapGet("/api/status", () =>
     };
 });
 
-// READ (Obter todas)
-app.MapGet("/api/conta", (ContaService service) =>
-{
-    return service.ObterTodas();
-});
-
-// READ (Obter por ID)
-app.MapGet("/api/conta/{id}", (int id, ContaService service) =>
-{
-    var conta = service.ObterPorId(id);
-
-    if (conta == null)
-    {
-        return Results.NotFound(new { mensagem = "Conta não encontrada!" });
-    }
-
-    return Results.Ok(conta);
-});
-
-// CREATE (Criar nova conta)
-app.MapPost("/api/conta", (Conta novaConta, ContaService service) =>
-{
-    var contaCriada = service.Adicionar(novaConta);
-    return Results.Created($"/api/conta/{contaCriada.Id}", contaCriada);
-});
-
-// DELETE (Remover conta por ID)
-app.MapDelete("/api/conta/{id}", (int id, ContaService service) =>
-{
-    var removido = service.Remover(id);
-
-    if (!removido)
-    {
-        return Results.NotFound(new { mensagem = "Conta não encontrada para remoção!" });
-    }
-
-    return Results.NoContent(); // Código 204: Sucesso sem conteúdo de retorno
-});
+// 3. Mapeia automaticamente todas as rotas criadas nos Controllers
+app.MapControllers();
 
 app.Run();
