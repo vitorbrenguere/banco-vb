@@ -56,4 +56,14 @@ public class ContaController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpPut("{id}")]
+    public ActionResult<Conta> Atualizar(int id, [FromBody] ContaCriacaoDto dto)
+    {
+    var contaAtualizada = _contaService.Atualizar(id, dto);
+    if (contaAtualizada == null)
+        return NotFound(new { mensagem = $"Conta com ID {id} não encontrada." });
+
+    return Ok(contaAtualizada);
+    }
 }
