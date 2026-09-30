@@ -65,7 +65,7 @@ public class ContaService
     }
 
     public Conta? Depositar(int id, decimal valor)
-{
+    {
     var conta = ObterPorId(id);
     if (conta == null) return null;
 
@@ -125,37 +125,39 @@ public class ContaService
         var contaOrigem = ObterPorId(contaOrigemId);
         var contaDestino = ObterPorId(contaDestinoId);
 
-    if (contaOrigem == null || contaDestino == null)
-    {
-        return false;
-    }
+        if (contaOrigem == null || contaDestino == null)
+        {
+            return false;
+        }
 
-    if (contaOrigem.Saldo < valor)
-    {
-        throw new InvalidOperationException("Saldo insuficiente para realizar a transferência.");
-    }
+        if (contaOrigem.Saldo < valor)
+        {
+            throw new InvalidOperationException("Saldo insuficiente para realizar a transferência.");
+        }
 
         contaOrigem.Saldo -= valor;
         contaDestino.Saldo += valor;
 
         var dataAgora = DateTime.UtcNow;
 
-        // Registar Histórico na Conta de Origem
+        // Registar Histórico na Conta de Origem (guarda para quem foi enviado)
         _context.Transacoes.Add(new Transacao
         {
             Tipo = "TransferenciaEnviada",
             Valor = valor,
-             DataHora = dataAgora,
-            ContaId = contaOrigem.Id
+            DataHora = dataAgora,
+            ContaId = contaOrigem.Id,
+            ContaRelacionadaTitular = contaDestino.Titular
         });
 
-        // Registar Histórico na Conta de Destino
+        // Registar Histórico na Conta de Destino (guarda de quem foi recebido)
         _context.Transacoes.Add(new Transacao
-         {
-             Tipo = "TransferenciaRecebida",
-             Valor = valor,
-             DataHora = dataAgora,
-             ContaId = contaDestino.Id
+        {
+            Tipo = "TransferenciaRecebida",
+            Valor = valor,
+            DataHora = dataAgora,
+            ContaId = contaDestino.Id,
+            ContaRelacionadaTitular = contaOrigem.Titular
         });
 
         _context.Contas.Update(contaOrigem);
@@ -164,6 +166,7 @@ public class ContaService
 
         return true;
     }
+
 
     // NOVO MÉTODO: Obter o extrato da conta
     public List<Transacao>? ObterExtrato(int contaId)
@@ -175,5 +178,5 @@ public class ContaService
             .Where(t => t.ContaId == contaId)
             .OrderByDescending(t => t.DataHora)
             .ToList();
-}
+    }
 }
