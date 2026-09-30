@@ -63,4 +63,36 @@ public class ContaService
 
     return contaExistente;
     }
+
+    public Conta? Depositar(int id, decimal valor)
+{
+    var conta = ObterPorId(id);
+    if (conta == null) return null;
+
+    conta.Saldo += valor;
+
+    _context.Contas.Update(conta);
+    _context.SaveChanges();
+
+    return conta;
+}
+
+    public Conta? Sacar(int id, decimal valor)
+    {
+    var conta = ObterPorId(id);
+    if (conta == null) return null;
+
+    // Regra de Negócio: Não permite saldo negativo no saque
+    if (conta.Saldo < valor)
+    {
+        throw new InvalidOperationException("Saldo insuficiente para realizar o saque.");
+    }
+
+    conta.Saldo -= valor;
+
+    _context.Contas.Update(conta);
+    _context.SaveChanges();
+
+    return conta;
+    }
 }

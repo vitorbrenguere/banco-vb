@@ -1,5 +1,5 @@
-using banco_vb.Models;
 using banco_vb.DTOs;
+using banco_vb.Models;
 using banco_vb.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,59 +11,87 @@ public class ContaController : ControllerBase
 {
     private readonly ContaService _contaService;
 
-    // Injeção de Dependência do ContaService via construtor
     public ContaController(ContaService contaService)
     {
         _contaService = contaService;
     }
 
+    // GET: api/Conta
     [HttpGet]
     public ActionResult<List<Conta>> ObterTodas()
     {
-        var contas = _contaService.ObterTodas();
-        return Ok(contas);
+        return Ok(_contaService.ObterTodas());
     }
 
+    // GET: api/Conta/1
     [HttpGet("{id}")]
     public ActionResult<Conta> ObterPorId(int id)
     {
         var conta = _contaService.ObterPorId(id);
-
         if (conta == null)
-        {
-            return NotFound(new { mensagem = "Conta não encontrada!" });
-        }
+            return NotFound(new { mensagem = $"Conta com ID {id} não encontrada." });
 
         return Ok(conta);
     }
 
+    // POST: api/Conta
     [HttpPost]
     public ActionResult<Conta> Adicionar([FromBody] ContaCriacaoDto dto)
     {
-        var contaCriada = _contaService.Adicionar(dto);
-        return CreatedAtAction(nameof(ObterPorId), new { id = contaCriada.Id }, contaCriada);
+        var novaConta = _contaService.Adicionar(dto);
+        return CreatedAtAction(nameof(ObterPorId), new { id = novaConta.Id }, novaConta);
     }
 
+    // PUT: api/Conta/1
+    [HttpPut("{id}")]
+    public ActionResult<Conta> Atualizar(int id, [FromBody] ContaCriacaoDto dto)
+    {
+        var contaAtualizada = _contaService.Atualizar(id, dto);
+        if (contaAtualizada == null)
+            return NotFound(new { mensagem = $"Conta com ID {id} não encontrada." });
+
+        return Ok(contaAtualizada);
+    }
+
+    // DELETE: api/Conta/1
     [HttpDelete("{id}")]
     public IActionResult Remover(int id)
     {
         var removido = _contaService.Remover(id);
-
         if (!removido)
-        {
-            return NotFound(new { mensagem = "Conta não encontrada para remoção!" });
-        }
+            return NotFound(new { mensagem = $"Conta com ID {id} não encontrada." });
 
         return NoContent();
     }
 
-    [HttpPut("{id}")]
-    public ActionResult<Conta> Atualizar(int id, [FromBody] ContaCriacaoDto dto)
-    {
-    var contaAtualizada = _contaService.Atualizar(id, dto);
-    if (contaAtualizada == null)
-        return NotFound(new { mensagem = $"Conta com ID {id} não encontrada." });
+// --- NOVOS ENDPOINTS DA FASE 4 ---
 
-    return Ok(contaAtualizada);
+    // POST: api/Conta/1/deposito
+    [HttpPost("{id}/deposito")]
+    public ActionResult<Conta> Depositar(int id, [FromBody] OperacaoDto dto)
+    {
+        var conta = _contaService.Depositar(id, dto.Valor);
+        if (conta == null)
+            return NotFound(new { mensagem = $"Conta com ID {id} não encontrada." });
+
+        return Ok(conta);
+    }
+
+    // POST: api/Conta/1/saque
+    [HttpPost("{id}/saque")]
+    public ActionResult<Conta> Sacar(int id, [FromBody] OperacaoDto dto)
+    {
+        try
+        {
+            var conta = _contaService.Sacar(id, dto.Valor);
+            if (conta == null)
+                return NotFound(new { mensagem = $"Conta com ID {id} não encontrada." });
+
+            return Ok(conta);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
     }
 }

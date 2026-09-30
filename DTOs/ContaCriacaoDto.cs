@@ -10,4 +10,4 @@ public class ContaCriacaoDto
 
     [Range(0, double.MaxValue, ErrorMessage = "O saldo inicial não pode ser negativo.")]
     public decimal Saldo { get; set; }
-}    
+}
