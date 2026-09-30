@@ -2,15 +2,22 @@ using banco_vb.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Registra os Controllers da aplicação
 builder.Services.AddControllers();
-
-// 2. Registra o nosso serviço de contas
 builder.Services.AddSingleton<ContaService>();
+
+// 1. Adiciona os serviços do Swagger/OpenAPI
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Rotas informativas gerais (opcional)
+// 2. Ativa a interface visual do Swagger no ambiente de desenvolvimento
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
 app.MapGet("/api/status", () => 
 {
     return new 
@@ -21,7 +28,6 @@ app.MapGet("/api/status", () =>
     };
 });
 
-// 3. Mapeia automaticamente todas as rotas criadas nos Controllers
 app.MapControllers();
 
 app.Run();

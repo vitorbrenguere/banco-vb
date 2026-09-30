@@ -1,9 +1,11 @@
 using banco_vb.Models;
+using banco_vb.DTOs;
 
 namespace banco_vb.Services;
 
 public class ContaService
 {
+    private int proximoId = 4; // Inicializa o próximo ID a ser atribuído
     private readonly List<Conta> _contas = new()
     {
         new Conta { Id = 1, Titular = "Vitor Brenguere", Saldo = 1500.50m },
@@ -22,10 +24,15 @@ public class ContaService
     }
 
     // Novo método: Cria uma nova conta e gera o ID automaticamente
-    public Conta Adicionar(Conta novaConta)
+    public Conta Adicionar(ContaCriacaoDto dto)
     {
-        // Pega o maior ID atual e soma 1 (ou começa em 1 se a lista estiver vazia)
-        novaConta.Id = _contas.Any() ? _contas.Max(c => c.Id) + 1 : 1;
+        var novaConta = new Conta
+        {
+            Id = proximoId++,
+            Titular = dto.Titular,
+            Saldo = dto.Saldo
+        };
+
         _contas.Add(novaConta);
         return novaConta;
     }

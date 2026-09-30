@@ -26,3 +26,21 @@ Content-Type: application/json
 
 ### 4. Apagar uma conta (DELETE por ID)
 DELETE {{banco_vb_HostAddress}}/api/conta/2
+
+### 5. Teste de Validação: Apenas Saldo Negativo (DTO)
+POST {{banco_vb_HostAddress}}/api/conta
+Content-Type: application/json
+
+{
+  "titular": "Vitor",
+  "saldo": -100
+}
+
+### 6. Teste de Validação: Apenas Titular Em Branco (DTO)
+POST {{banco_vb_HostAddress}}/api/conta
+Content-Type: application/json
+
+{
+  "titular": "",
+  "saldo": 500
+}

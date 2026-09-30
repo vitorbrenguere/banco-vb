@@ -1,4 +1,5 @@
 using banco_vb.Models;
+using banco_vb.DTOs;
 using banco_vb.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -37,9 +38,9 @@ public class ContaController : ControllerBase
     }
 
     [HttpPost]
-    public ActionResult<Conta> Adicionar([FromBody] Conta novaConta)
+    public ActionResult<Conta> Adicionar([FromBody] ContaCriacaoDto dto)
     {
-        var contaCriada = _contaService.Adicionar(novaConta);
+        var contaCriada = _contaService.Adicionar(dto);
         return CreatedAtAction(nameof(ObterPorId), new { id = contaCriada.Id }, contaCriada);
     }
 
