@@ -71,6 +71,16 @@ public class ContaService
 
     conta.Saldo += valor;
 
+    // Registar Transação
+    var transacao = new Transacao
+    {
+        Tipo = "Deposito",
+        Valor = valor,
+        DataHora = DateTime.UtcNow,
+        ContaId = conta.Id
+    };
+
+    _context.Transacoes.Add(transacao);
     _context.Contas.Update(conta);
     _context.SaveChanges();
 
@@ -79,20 +89,91 @@ public class ContaService
 
     public Conta? Sacar(int id, decimal valor)
     {
-    var conta = ObterPorId(id);
-    if (conta == null) return null;
+        var conta = ObterPorId(id);
+        if (conta == null) return null;
 
-    // Regra de Negócio: Não permite saldo negativo no saque
-    if (conta.Saldo < valor)
+        if (conta.Saldo < valor)
+        {
+            throw new InvalidOperationException("Saldo insuficiente para realizar o saque.");
+        }
+
+        conta.Saldo -= valor;
+
+    // Registar Transação
+        var transacao = new Transacao
+        {
+            Tipo = "Saque",
+            Valor = valor,
+            DataHora = DateTime.UtcNow,
+            ContaId = conta.Id
+            };
+
+        _context.Transacoes.Add(transacao);
+        _context.Contas.Update(conta);
+        _context.SaveChanges();
+
+        return conta;
+    }
+
+    public bool Transferir(int contaOrigemId, int contaDestinoId, decimal valor)
     {
-        throw new InvalidOperationException("Saldo insuficiente para realizar o saque.");
+        if (contaOrigemId == contaDestinoId)
+        {
+            throw new InvalidOperationException("Não é possível realizar uma transferência para a mesma conta.");
+        }
+
+        var contaOrigem = ObterPorId(contaOrigemId);
+        var contaDestino = ObterPorId(contaDestinoId);
+
+    if (contaOrigem == null || contaDestino == null)
+    {
+        return false;
     }
 
-    conta.Saldo -= valor;
-
-    _context.Contas.Update(conta);
-    _context.SaveChanges();
-
-    return conta;
+    if (contaOrigem.Saldo < valor)
+    {
+        throw new InvalidOperationException("Saldo insuficiente para realizar a transferência.");
     }
+
+        contaOrigem.Saldo -= valor;
+        contaDestino.Saldo += valor;
+
+        var dataAgora = DateTime.UtcNow;
+
+        // Registar Histórico na Conta de Origem
+        _context.Transacoes.Add(new Transacao
+        {
+            Tipo = "TransferenciaEnviada",
+            Valor = valor,
+             DataHora = dataAgora,
+            ContaId = contaOrigem.Id
+        });
+
+        // Registar Histórico na Conta de Destino
+        _context.Transacoes.Add(new Transacao
+         {
+             Tipo = "TransferenciaRecebida",
+             Valor = valor,
+             DataHora = dataAgora,
+             ContaId = contaDestino.Id
+        });
+
+        _context.Contas.Update(contaOrigem);
+        _context.Contas.Update(contaDestino);
+        _context.SaveChanges();
+
+        return true;
+    }
+
+    // NOVO MÉTODO: Obter o extrato da conta
+    public List<Transacao>? ObterExtrato(int contaId)
+    {
+        var conta = ObterPorId(contaId);
+        if (conta == null) return null;
+
+        return _context.Transacoes
+            .Where(t => t.ContaId == contaId)
+            .OrderByDescending(t => t.DataHora)
+            .ToList();
+}
 }

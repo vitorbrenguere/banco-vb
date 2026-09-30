@@ -11,4 +11,7 @@ public class BancoDbContext : DbContext
 
     // Esta propriedade vai virar a tabela "Contas" no SQLite
     public DbSet<Conta> Contas { get; set; }
+
+    // Esta propriedade vai virar a tabela "Transacoes" no SQLite
+    public DbSet<Transacao> Transacoes { get; set; }
 }

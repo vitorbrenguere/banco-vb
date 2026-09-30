@@ -94,4 +94,33 @@ public class ContaController : ControllerBase
             return BadRequest(new { mensagem = ex.Message });
         }
     }
+
+// POST: api/Conta/1/transferir
+    [HttpPost("{id}/transferir")]
+    public IActionResult Transferir(int id, [FromBody] TransferenciaDto dto)
+    {
+        try
+        {
+            var sucesso = _contaService.Transferir(id, dto.ContaDestinoId, dto.Valor);
+            if (!sucesso)
+                return NotFound(new { mensagem = "Conta de origem ou conta de destino não encontrada." });
+
+            return Ok(new { mensagem = "Transferência realizada com sucesso!" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
+    }
+
+// GET: api/Conta/1/extrato
+    [HttpGet("{id}/extrato")]
+    public ActionResult<List<Transacao>> ObterExtrato(int id)
+    {
+        var extrato = _contaService.ObterExtrato(id);
+        if (extrato == null)
+            return NotFound(new { mensagem = $"Conta com ID {id} não encontrada." });
+
+        return Ok(extrato);
+    }
 }
